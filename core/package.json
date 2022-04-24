@@ -11,6 +11,14 @@
   ],
   "author": "monyone <monyone.teihen@gmail.com>",
   "license": "MIT",
+  "description": "SRT implementation for Pure Typescript",
+  "keywords": [
+    "SRT"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/monyone/yukkuri"
+  },
   "scripts": {
     "tsc": "tsc",
     "build": "npm-run-all clean tsc",
