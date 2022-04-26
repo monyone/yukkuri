@@ -15,3 +15,4 @@ export { MessageDropRequest, parseMessageDropRequest, buildMessageDropRequest } 
 export { PeerError, parsePeerError, buildPeerError } from './lib/peer-error'
 
 export { default as CallerStreamReader, CallerStreamReaderOption } from './caller/stream-reader'
+export { default as CallerStreamSender, CallerStreamSenderOption } from './caller/stream-sender'
