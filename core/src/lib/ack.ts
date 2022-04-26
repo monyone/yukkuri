@@ -11,8 +11,18 @@ export type FullAck = {
   recieving_rate: number
 };
 
+export type FullAckOld = {
+  acknowledgement_number: number,
+  last_acknowledged_packet_sequence_number: number,
+  rtt: number,
+  rtt_variance: number,
+  available_buffer_size: number,
+  packets_recieving_rate: number,
+  estimated_link_capacity: number,
+};
+
 export type LightAck = {
-  acknowledgement_number: 0,
+  acknowledgement_number: number, // shuold be zero
   last_acknowledged_packet_sequence_number: number,
 };
 
@@ -22,53 +32,62 @@ export type SmallAck = LightAck & {
   available_buffer_size: number,
 };
 
-export type Ack = FullAck | LightAck | SmallAck;
+export type Ack = FullAck | FullAckOld | LightAck | SmallAck;
 
 export const parseAck = ({ CIF, type_specific_information }: ControlPacket): Ack => {
-  const acknowledgement_number = (new Uint32Array(type_specific_information)[0]);
+  const type_specific_information_view = new DataView(type_specific_information);
+  const acknowledgement_number = type_specific_information_view.getUint32(0, false);
 
-  if (acknowledgement_number === 0) {
-    const view = new DataView(CIF);
+  const view = new DataView(CIF);
     
-    const last_acknowledged_packet_sequence_number = view.getUint32(0, false);
-    if (CIF.byteLength > 4) { // small Ack
-      const rtt = view.getUint32(4, false);
-      const rtt_variance = view.getUint32(8, false);
-      const available_buffer_size = view.getUint32(12, false);
-    
+  const last_acknowledged_packet_sequence_number = view.getUint32(0, false);
+
+  if (CIF.byteLength > 4) { // small Ack
+    const rtt = view.getUint32(4, false);
+    const rtt_variance = view.getUint32(8, false);
+    const available_buffer_size = view.getUint32(12, false);
+
+    if (CIF.byteLength > 16) {
+      const packets_recieving_rate = view.getUint32(16, false);
+      const estimated_link_capacity = view.getUint32(20, false);
+
+      if (CIF.byteLength > 24) {
+        const recieving_rate = view.getUint32(24, false);
+
+        return {
+          acknowledgement_number,
+          last_acknowledged_packet_sequence_number,
+          rtt,
+          rtt_variance,
+          available_buffer_size,
+          packets_recieving_rate,
+          estimated_link_capacity,
+          recieving_rate
+        };
+      } else {
+        return {
+          acknowledgement_number,
+          last_acknowledged_packet_sequence_number,
+          rtt,
+          rtt_variance,
+          available_buffer_size,
+          packets_recieving_rate,
+          estimated_link_capacity,
+        };
+      }
+    } else {
       return {
-        acknowledgement_number: 0,
+        acknowledgement_number,
         last_acknowledged_packet_sequence_number,
         rtt,
         rtt_variance,
         available_buffer_size
       };
-    } else { // light Ack
-      return {
-        acknowledgement_number: 0,
-        last_acknowledged_packet_sequence_number,
-      };
     }
-  } else {
-    const view = new DataView(CIF);
-    
-    const last_acknowledged_packet_sequence_number = view.getUint32(0, false);
-    const rtt = view.getUint32(4, false);
-    const rtt_variance = view.getUint32(8, false);
-    const available_buffer_size = view.getUint32(12, false);
-    const packets_recieving_rate = view.getUint32(16, false);
-    const estimated_link_capacity = view.getUint32(20, false);
-    const recieving_rate = view.getUint32(24, false);
-
+  } else { // light Ack
     return {
       acknowledgement_number,
-      last_acknowledged_packet_sequence_number,
-      rtt,
-      rtt_variance,
-      available_buffer_size,
-      packets_recieving_rate,
-      estimated_link_capacity,
-      recieving_rate
+      last_acknowledged_packet_sequence_number
     };
   }
 };

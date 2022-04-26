@@ -1,5 +1,5 @@
 export type DataPacket = {
-  F: 1,
+  F: 0,
   packet_sequence_number: number,
   P: number,
   O: boolean,
@@ -49,7 +49,7 @@ export const parseDataPacket = (packet: ArrayBuffer): DataPacket => {
 };
 
 export const buildDataPacket = (data_packet: DataPacket): ArrayBuffer => {
-  const buffer = new ArrayBuffer(32 + data_packet.data.byteLength)
+  const buffer = new ArrayBuffer(16 + data_packet.data.byteLength)
   const array = new Uint8Array(buffer);
   const view = new DataView(buffer);
 
@@ -57,14 +57,14 @@ export const buildDataPacket = (data_packet: DataPacket): ArrayBuffer => {
   view.setUint32(4, data_packet.message_number, false);
   view.setUint8(4, 
     ((data_packet.P & 0x03) << 6)
-    | ((data_packet.O ? 1 : 0) << 4)
+    | ((data_packet.O ? 1 : 0) << 5)
     | ((data_packet.K & 0x03) << 3)
     | ((data_packet.R ? 1 : 0) << 2)
     | ((data_packet.message_number & 0x03000000) >>> 24)
   );
   view.setUint32(8, data_packet.timestamp, false);
   view.setUint32(12, data_packet.destination_socket_id, false);
-  array.set(new Uint8Array(data_packet.data), 32);
+  array.set(new Uint8Array(data_packet.data), 16);
 
   return buffer;
 }
